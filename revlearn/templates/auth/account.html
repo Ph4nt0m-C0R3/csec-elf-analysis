@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Your account | ELF Security Learning Lab{% endblock %}
+
+{% block content %}
+<section class="hero compact-hero">
+  <p class="eyebrow">{{ current_user.role }} workspace</p>
+  <h1>Welcome, {{ current_user.display_name }}.</h1>
+  <p class="lead">
+    {% if current_user.role == 'student' %}Track learning topics and use the analysis lab as part of your personal study workflow.
+    {% elif current_user.role == 'instructor' %}Maintain the learning guide used by students and access the complete analysis lab.
+    {% else %}Control account access, review audit activity, and oversee instructor content management.{% endif %}
+  </p>
+</section>
+
+<section class="account-grid">
+  <article class="panel account-card">
+    <span class="role-badge role-{{ current_user.role }}">{{ current_user.role }}</span>
+    <h2>Account details</h2>
+    <dl class="account-details">
+      <div><dt>Email</dt><dd>{{ current_user.email }}</dd></div>
+      <div><dt>Created</dt><dd>{{ current_user.created_at }}</dd></div>
+      <div><dt>Last sign in</dt><dd>{{ current_user.last_login_at or "First session" }}</dd></div>
+    </dl>
+  </article>
+  <article class="panel account-card role-workspace-card">
+    <span class="eyebrow">Role capability</span>
+    {% if current_user.role == 'student' %}
+      <h2>Student learning dashboard</h2>
+      <p>Study detailed topic examples, mark lessons complete, and revisit your private analysis reports.</p>
+      <div class="button-row"><a class="primary-button" href="{{ url_for('classroom.student_dashboard') }}">Open student dashboard</a><a class="secondary-button" href="{{ url_for('classroom.report_history') }}">My reports</a></div>
+    {% elif current_user.role == 'instructor' %}
+      <h2>Instructor content workspace</h2>
+      <p>Edit the shared learning guide and publish safe, reproducible binary examples.</p>
+      <div class="button-row"><a class="primary-button" href="{{ url_for('classroom.instructor_dashboard') }}">Manage learning content</a><a class="secondary-button" href="{{ url_for('examples.manage') }}">Manage examples</a></div>
+    {% else %}
+      <h2>Administrator control center</h2>
+      <p>Review accounts, assign approved roles, disable access, and inspect account audit events.</p>
+      <div class="button-row">
+        <a class="primary-button" href="{{ url_for('classroom.admin_dashboard') }}">Manage accounts</a>
+        <a class="secondary-button" href="{{ url_for('classroom.instructor_dashboard') }}">Manage learning content</a>
+        <a class="secondary-button" href="{{ url_for('examples.manage') }}">Manage examples</a>
+      </div>
+    {% endif %}
+  </article>
+  <article class="panel account-card shared-tools-card">
+    <span class="eyebrow">Shared laboratory</span>
+    <h2>Static-analysis tools</h2>
+    <p>All authenticated roles retain access to the analyzer and comparison tools. Uploaded files are deleted immediately.</p>
+    <div class="button-row">
+      <a class="primary-button" href="{{ url_for('main.index') }}">Open analyzer</a>
+      <a class="secondary-button" href="{{ url_for('main.compare_form') }}">Compare files</a>
+      <a class="secondary-button" href="{{ url_for('examples.index') }}">Browse examples</a>
+    </div>
+  </article>
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Learning Guide | ELF Security Learning Lab{% endblock %}
+{% block content %}
+<section class="hero compact-hero">
+  <div class="eyebrow">Learning guide</div>
+  <h1>Read the finding, then understand the reason.</h1>
+  <p class="lead">
+    These explanations support beginner learning. They deliberately avoid
+    claiming that one protection or function proves a vulnerability.
+  </p>
+</section>
+
+<div class="topic-grid">
+  {% for topic in topics %}
+  <a class="panel topic-card topic-card-link" href="{{ url_for('main.learning_detail', topic=topic.topic) }}">
+    <span class="topic-sequence">Topic {{ "%02d"|format(loop.index) }}</span>
+    <span class="category">{{ topic.category }}</span>
+    <h2>{{ topic.title }}</h2>
+    <p>{{ topic.explanation }}</p>
+    <span class="topic-open-link">Study this topic <span aria-hidden="true">&rarr;</span></span>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

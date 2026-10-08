@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Comparison Report | ELF Security Learning Lab{% endblock %}
+{% block content %}
+<section class="report-header">
+  <div>
+    <div class="eyebrow">Side-by-side static analysis</div>
+    <h1>Comparison report</h1>
+    <p>{{ left.filename }} compared with {{ right.filename }}</p>
+  </div>
+  <div class="header-actions">
+    <a class="secondary-button" href="{{ url_for('main.compare_form') }}">Compare another pair</a>
+    <a class="secondary-button" href="{{ url_for('main.index') }}">Single analyzer</a>
+  </div>
+</section>
+
+<section class="compare-scoreboard panel" aria-labelledby="compare-risk-title">
+  <article class="compare-score-card security-score-tone-{{ left.risk_summary.security_level }}">
+    <span class="compare-side-label">Baseline</span>
+    <span class="risk-kicker">{{ left.filename }}</span>
+    <strong>{{ left.risk_summary.score }}/100</strong>
+    <p>{{ left.risk_summary.rating }} security rating. {{ left.functions.warnings|length }} function warning(s).</p>
+  </article>
+  <article class="compare-score-card security-score-tone-{{ right.risk_summary.security_level }}">
+    <span class="compare-side-label">Comparison</span>
+    <span class="risk-kicker">{{ right.filename }}</span>
+    <strong id="compare-risk-title">{{ right.risk_summary.score }}/100</strong>
+    <p>
+      {{ right.risk_summary.rating }} security rating.
+      Security delta from baseline: {{ "%+d"|format(comparison.security_delta) }}.
+    </p>
+  </article>
+</section>
+
+<section class="panel report-section compare-section" aria-labelledby="protection-compare-title">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">Protections</span>
+      <h2 id="protection-compare-title">Hardening comparison</h2>
+      <p>Each row keeps both files visible, with evidence separated for easier screenshots and viva explanation.</p>
+    </div>
+  </div>
+  <div class="protection-compare-list">
+    {% for row in comparison.protection_rows %}
+    <article class="protection-compare-row {{ 'changed' if row.changed else 'same' }}">
+      <div class="compare-check-heading">
+        <span class="compare-check-name">{{ row.label }}</span>
+        <span class="change-pill">{{ "Changed" if row.changed else "Same" }}</span>
+      </div>
+      <div class="compare-file-finding">
+        <span class="compare-side-label">Baseline</span>
+        <strong>{{ left.filename }}</strong>
+        <span class="status-badge status-text-{{ row.left.level }}">{{ row.left.status }}</span>
+        <p>{{ row.left.evidence }}</p>
+      </div>
+      <div class="compare-file-finding">
+        <span class="compare-side-label">Comparison</span>
+        <strong>{{ right.filename }}</strong>
+        <span class="status-badge status-text-{{ row.right.level }}">{{ row.right.status }}</span>
+        <p>{{ row.right.evidence }}</p>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="compare-file-section" aria-labelledby="file-analysis-title">
+  <div class="section-heading compare-analysis-heading">
+    <div>
+      <span class="eyebrow">Per-file analysis</span>
+      <h2 id="file-analysis-title">Clear summary for each uploaded file</h2>
+    </div>
+  </div>
+  <div class="compare-file-grid">
+  {% for side, result in [("Baseline", left), ("Comparison", right)] %}
+  <article class="panel report-section compare-file-panel">
+    <header class="compare-file-header">
+      <span class="compare-side-label">{{ side }}</span>
+      <h2>{{ result.filename }}</h2>
+      <strong>{{ result.risk_summary.score }}/100 {{ result.risk_summary.rating }} security</strong>
+    </header>
+    <dl class="fact-grid compact-facts">
+      <div><dt>Architecture</dt><dd>{{ result.metadata.architecture }}</dd></div>
+      <div><dt>Type</dt><dd>{{ result.metadata.file_type }}</dd></div>
+      <div><dt>Entry point</dt><dd><code>{{ result.metadata.entry_point }}</code></dd></div>
+      <div><dt>Security score</dt><dd>{{ result.risk_summary.score }}/100</dd></div>
+      <div><dt>Imports</dt><dd>{{ result.functions.imports|length }}</dd></div>
+      <div><dt>Warnings</dt><dd>{{ result.functions.warnings|length }}</dd></div>
+    </dl>
+    <h3>Key observations</h3>
+    <div class="observation-list compare-observations">
+      {% for item in result.education.observations[:3] %}
+      <article class="observation severity-{{ item.severity }}">
+        <span class="risk-badge risk-{{ item.severity }}">
+          {{ "Information" if item.severity == "info" else item.severity + " risk" }}
+        </span>
+        <strong>{{ item.title }}</strong>
+        <p>{{ item.detail }}</p>
+      </article>
+      {% endfor %}
+    </div>
+    {% if result.education.recommendations %}
+    <h3>Top recommendations</h3>
+    <ol class="recommendation-list">
+      {% for item in result.education.recommendations[:4] %}
+      <li>
+        <span class="priority-badge priority-{{ item.priority|lower }}">{{ item.priority }}</span>
+        <strong>{{ item.action }}</strong>
+      </li>
+      {% endfor %}
+    </ol>
+    {% endif %}
+  </article>
+  {% endfor %}
+  </div>
+</section>
+
+<section class="panel report-section compare-section" aria-labelledby="imports-compare-title">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">Imports</span>
+      <h2 id="imports-compare-title">Imported symbol differences</h2>
+    </div>
+  </div>
+  <div class="string-categories">
+    <article>
+      <h3>Only in {{ left.filename }} <span>{{ comparison.left_only_imports|length }}</span></h3>
+      <div class="code-cloud">{% for name in comparison.left_only_imports %}<code>{{ name }}</code>{% endfor %}</div>
+    </article>
+    <article>
+      <h3>Only in {{ right.filename }} <span>{{ comparison.right_only_imports|length }}</span></h3>
+      <div class="code-cloud">{% for name in comparison.right_only_imports %}<code>{{ name }}</code>{% endfor %}</div>
+    </article>
+  </div>
+</section>
+{% endblock %}

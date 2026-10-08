@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>{% block title %}ELF Security Learning Lab{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <script src="{{ url_for('static', filename='js/password-toggle.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/flash-messages.js') }}" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('main.index') }}">
+      <span class="brand-mark" aria-hidden="true">ELF</span>
+      <span>
+        <strong>Binary Security Lab</strong>
+        <small>Static analysis for learning</small>
+      </span>
+    </a>
+    <div class="header-actions">
+      <nav aria-label="Primary">
+        <a href="{{ url_for('main.index') }}">Analyzer</a>
+        <a href="{{ url_for('main.compare_form') }}">Compare</a>
+        <a href="{{ url_for('main.learning') }}">Learning guide</a>
+        <a href="{{ url_for('examples.index') }}">Examples</a>
+        {% if current_user and current_user.role == 'student' %}
+          <a href="{{ url_for('classroom.student_dashboard') }}">My learning</a>
+          <a href="{{ url_for('classroom.report_history') }}">My reports</a>
+        {% endif %}
+        {% if current_user and current_user.role in ('instructor', 'admin') %}
+          <a href="{{ url_for('classroom.instructor_dashboard') }}">Instructor</a>
+        {% endif %}
+        {% if current_user and current_user.role == 'admin' %}
+          <a href="{{ url_for('classroom.admin_dashboard') }}">Admin</a>
+        {% endif %}
+      </nav>
+      <div class="account-nav">
+        {% if current_user %}
+          <a class="account-link" href="{{ url_for('auth.account') }}">
+            <span>{{ current_user.display_name }}</span>
+            <small>{{ current_user.role }}</small>
+          </a>
+          <form action="{{ url_for('auth.logout') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="nav-button" type="submit">Sign out</button>
+          </form>
+        {% else %}
+          <span class="guest-label">Guest</span>
+          <a href="{{ url_for('auth.login') }}">Sign in</a>
+          <a class="nav-cta" href="{{ url_for('auth.register') }}">Create account</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="page-shell">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack" aria-live="polite">
+          {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}" role="status"
+                 {% if category == 'success' %}data-auto-dismiss="6000"{% endif %}>
+              <span>{{ message }}</span>
+              <button class="flash-dismiss" type="button" aria-label="Dismiss notification">&times;</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <p>Educational static analysis only. A report is an observation, not a safety verdict.</p>
+  </footer>
+</body>
+</html>

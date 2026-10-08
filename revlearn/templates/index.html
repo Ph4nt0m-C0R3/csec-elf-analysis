@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Analyze an ELF | ELF Security Learning Lab{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="eyebrow">Reverse Engineering and Binary Security Analysis</div>
+  <h1>Understand an ELF file without running it.</h1>
+  <p class="lead">
+    Upload an authorized Linux executable to inspect its structure, common
+    hardening mechanisms, imported functions, and printable strings.
+  </p>
+</section>
+
+<div class="home-grid">
+  <section class="panel upload-panel" aria-labelledby="upload-title">
+    <div class="panel-heading">
+      <span class="step-number">01</span>
+      <div>
+        <h2 id="upload-title">Choose an ELF executable</h2>
+        <p>One ELF file, up to {{ max_upload_mb }} MiB.</p>
+      </div>
+    </div>
+
+    <form action="{{ url_for('main.analyze_upload') }}" method="post"
+          enctype="multipart/form-data" class="upload-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="file-zone" for="binary">
+        <span class="file-icon" aria-hidden="true">0110</span>
+        <strong>Select a file</strong>
+        <span>ELF executable or position-independent executable</span>
+        <input id="binary" name="binary" type="file"
+               accept=".elf,.bin,.out,application/x-executable,application/octet-stream"
+               required>
+      </label>
+      <label class="authorization">
+        <input type="checkbox" required>
+        <span>I own this file or have permission to analyze it.</span>
+      </label>
+      <button class="primary-button" type="submit">Analyze safely</button>
+    </form>
+  </section>
+
+  <aside class="panel process-panel" aria-labelledby="process-title">
+    <div class="panel-heading">
+      <span class="step-number">02</span>
+      <div>
+        <h2 id="process-title">What the lab checks</h2>
+        <p>Clear findings, with evidence and limitations.</p>
+      </div>
+    </div>
+    <ol class="check-list">
+      <li><span>Header</span> Architecture, type, entry point, readelf-like evidence</li>
+      <li><span>Hardening</span> Canary, NX, PIE, RELRO, Fortify, paths</li>
+      <li><span>Imports</span> Functions that require careful use</li>
+      <li><span>Strings</span> URLs, paths, commands, suspicious clues</li>
+      <li><span>Scoring</span> Educational risk score and recommendations</li>
+    </ol>
+  </aside>
+</div>
+
+<section class="safety-strip" aria-label="Safety design">
+  <div><strong>Never executed</strong><span>Static file parsing only</span></div>
+  <div><strong>Temporary</strong><span>Deleted after the report</span></div>
+  <div><strong>Portable</strong><span>Windows 11 and Kali Linux</span></div>
+</section>
+{% endblock %}

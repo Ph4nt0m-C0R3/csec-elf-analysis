@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{{ example.title }} | Binary learning examples{% endblock %}
+
+{% block content %}
+<article class="example-detail">
+  <header class="hero compact-hero example-detail-hero">
+    <div class="example-meta">
+      <span class="difficulty difficulty-{{ example.difficulty }}">{{ example.difficulty }}</span>
+      <span>{{ example.architecture }}</span>
+      {% if not example.published %}<span class="draft-badge">Draft preview</span>{% endif %}
+    </div>
+    <h1>{{ example.title }}</h1>
+    <p class="lead">{{ example.summary }}</p>
+    <div class="button-row">
+      <a class="secondary-button" href="{{ url_for('examples.index') }}">Back to examples</a>
+      {% if can_manage %}<a class="primary-button" href="{{ url_for('examples.edit', slug=example.slug) }}">Edit example</a>{% endif %}
+    </div>
+  </header>
+
+  <aside class="panel safety-callout" aria-label="Safety note">
+    <strong>Authorized lab use only</strong>
+    <p>Review the source before compiling. Do not run unknown binaries, and use an isolated learning environment for any dynamic investigation.</p>
+  </aside>
+
+  <section class="example-section" aria-labelledby="source-title">
+    <div class="example-section-heading"><span>01</span><div><p class="eyebrow">Inspect</p><h2 id="source-title">Source code</h2></div></div>
+    <pre class="learning-code"><code>{{ example.source_code }}</code></pre>
+  </section>
+
+  <section class="example-section" aria-labelledby="build-title">
+    <div class="example-section-heading"><span>02</span><div><p class="eyebrow">Reproduce</p><h2 id="build-title">Build commands</h2></div></div>
+    <pre class="learning-code command-code"><code>{{ example.build_command }}</code></pre>
+  </section>
+
+  <section class="example-learning-grid">
+    <div class="panel example-notes">
+      <p class="eyebrow">03 &middot; Observe</p><h2>Expected findings</h2>
+      <p class="preserve-lines">{{ example.expected_findings }}</p>
+    </div>
+    <div class="panel example-notes">
+      <p class="eyebrow">04 &middot; Interpret</p><h2>Guided walkthrough</h2>
+      <p class="preserve-lines">{{ example.walkthrough }}</p>
+    </div>
+  </section>
+</article>
+{% endblock %}

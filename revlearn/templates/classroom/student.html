@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Student learning dashboard | ELF Security Learning Lab{% endblock %}
+
+{% block content %}
+<section class="hero compact-hero role-hero student-hero">
+  <p class="eyebrow">Student workspace</p>
+  <h1>Build your binary-security foundations.</h1>
+  <p class="lead">Track the concepts you have reviewed, then apply them in the analyzer. Progress belongs only to your account.</p>
+  <div class="button-row"><a class="primary-button" href="{{ url_for('classroom.report_history') }}">Review my reports ({{ report_total }})</a><a class="secondary-button" href="{{ url_for('main.index') }}">Analyze a binary</a></div>
+</section>
+
+<section class="panel progress-overview" aria-labelledby="progress-title">
+  <div>
+    <span class="role-badge role-student">Student</span>
+    <h2 id="progress-title">Learning progress</h2>
+    <p>{{ completed_total }} of {{ topic_total }} topics completed</p>
+  </div>
+  <progress class="progress-meter" max="{{ topic_total or 1 }}" value="{{ completed_total }}">{{ completed_total }} of {{ topic_total }}</progress>
+</section>
+
+<div class="student-topic-grid">
+  {% for topic in topics %}
+    <a id="{{ topic.topic }}" href="{{ url_for('main.learning_detail', topic=topic.topic) }}" class="panel student-topic-card topic-card-link{% if topic.topic in completed_topics %} topic-complete{% endif %}">
+      <header>
+        <div><span class="topic-sequence">{{ "%02d"|format(loop.index) }}</span><span class="category">{{ topic.category }}</span><h2>{{ topic.title }}</h2></div>
+        <span class="completion-state">{{ "Completed" if topic.topic in completed_topics else "To review" }}</span>
+      </header>
+      <p>{{ topic.explanation }}</p>
+      <span class="topic-open-link">Open detailed lesson <span aria-hidden="true">&rarr;</span></span>
+    </a>
+  {% endfor %}
+</div>
+{% endblock %}

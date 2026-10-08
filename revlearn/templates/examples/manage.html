@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Manage binary examples | ELF Security Learning Lab{% endblock %}
+
+{% block content %}
+<section class="hero compact-hero role-hero instructor-hero">
+  <p class="eyebrow">Instructor example studio</p>
+  <h1>Build safe, guided binary lessons.</h1>
+  <p class="lead">Draft, review, and publish examples as source plus reproducible instructions. The application does not retain compiled example binaries.</p>
+  <div class="button-row"><a class="primary-button" href="{{ url_for('examples.create') }}">Add new example</a><a class="secondary-button" href="{{ url_for('examples.index') }}">View public library</a></div>
+</section>
+
+<div class="manage-example-list">
+  {% for example in examples %}
+    <article class="panel manage-example-card">
+      <div>
+        <div class="example-meta"><span class="difficulty difficulty-{{ example.difficulty }}">{{ example.difficulty }}</span><span>{{ example.architecture }}</span><span class="{{ 'published-badge' if example.published else 'draft-badge' }}">{{ 'Published' if example.published else 'Draft' }}</span></div>
+        <h2>{{ example.title }}</h2><p>{{ example.summary }}</p>
+        <small>Updated {{ example.updated_at }}{% if example.author_name %} by {{ example.author_name }}{% endif %}</small>
+      </div>
+      <div class="button-row"><a class="secondary-button" href="{{ url_for('examples.detail', slug=example.slug) }}">Preview</a><a class="primary-button" href="{{ url_for('examples.edit', slug=example.slug) }}">Edit</a></div>
+    </article>
+  {% else %}<div class="panel empty-state"><h2>No examples yet</h2><p>Add the first guided binary lesson.</p></div>{% endfor %}
+</div>
+{% endblock %}

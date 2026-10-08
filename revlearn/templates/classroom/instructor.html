@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Instructor content workspace | ELF Security Learning Lab{% endblock %}
+
+{% block content %}
+<section class="hero compact-hero role-hero instructor-hero">
+  <p class="eyebrow">Instructor workspace</p>
+  <h1>Maintain the shared learning guide.</h1>
+  <p class="lead">Edit educational explanations and recommendations. Changes appear for guests and students and are recorded in the audit log.</p>
+  <div class="button-row"><a class="primary-button" href="{{ url_for('examples.manage') }}">Manage binary examples</a></div>
+</section>
+
+<section class="role-scope panel">
+  <span class="role-badge role-instructor">Instructor capability</span>
+  <p>Instructor access manages educational content only. Account roles and activation remain restricted to Administrators.</p>
+</section>
+
+<div class="instructor-topic-stack">
+  {% for topic in topics %}
+    <details id="{{ topic.topic }}" class="panel instructor-topic">
+      <summary>
+        <span><small>{{ topic.category }}</small>{{ topic.title }}</span>
+        <code>{{ topic.topic }}</code>
+      </summary>
+      <form action="{{ url_for('classroom.update_learning', topic=topic.topic) }}" method="post" class="content-editor">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="editor-grid">
+          <label>Title<input name="title" maxlength="120" required value="{{ topic.title }}"></label>
+          <label>Category<input name="category" maxlength="80" required value="{{ topic.category }}"></label>
+        </div>
+        <label>Explanation<textarea name="explanation" minlength="10" maxlength="2000" required>{{ topic.explanation }}</textarea></label>
+        <label>Why it matters<textarea name="risk" minlength="10" maxlength="2000" required>{{ topic.risk }}</textarea></label>
+        <label>Recommended practice<textarea name="recommendation" minlength="10" maxlength="2000" required>{{ topic.recommendation }}</textarea></label>
+        <label>Advanced technical details<textarea name="technical_details" minlength="40" maxlength="5000" required>{{ topic.technical_details }}</textarea></label>
+        <div class="editor-grid">
+          <label>Reproducible lab exercise<textarea name="lab_exercise" minlength="30" maxlength="5000" required>{{ topic.lab_exercise }}</textarea></label>
+          <label>Expected observations<textarea name="expected_observations" minlength="30" maxlength="5000" required>{{ topic.expected_observations }}</textarea></label>
+        </div>
+        <div class="editor-grid">
+          <label>Vulnerable or weak source example<textarea class="code-input" name="vulnerable_example" minlength="10" maxlength="12000" required>{{ topic.vulnerable_example }}</textarea></label>
+          <label>Secure coding or build example<textarea class="code-input" name="secure_example" minlength="10" maxlength="12000" required>{{ topic.secure_example }}</textarea></label>
+        </div>
+        <label>Guided review steps<textarea name="review_steps" minlength="20" maxlength="4000" required>{{ topic.review_steps }}</textarea></label>
+        <button class="primary-button" type="submit">Save learning content</button>
+      </form>
+    </details>
+  {% endfor %}
+</div>
+{% endblock %}

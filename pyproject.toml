@@ -1,0 +1,17 @@
+[project]
+name = "reverse-engineering-learning-system"
+version = "1.0.0"
+description = "Educational static ELF security analysis web application"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.coverage.run]
+source = ["revlearn"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

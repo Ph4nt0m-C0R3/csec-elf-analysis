@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Delete saved report | ELF Security Learning Lab{% endblock %}
+
+{% block content %}
+<section class="confirmation-layout">
+  <div class="panel confirmation-card danger-confirmation">
+    <span class="eyebrow">Delete saved report</span>
+    <h1>Remove {{ record.filename }}?</h1>
+    <p>This permanently deletes your saved analysis result and disables its PDF link. The original ELF file is already absent because uploads are deleted immediately after analysis.</p>
+    <dl class="confirmation-facts"><div><dt>Analyzed</dt><dd>{{ record.created_at }}</dd></div><div><dt>Score</dt><dd>{{ record.score }}/100 &middot; {{ record.rating }}</dd></div></dl>
+    <form action="{{ url_for('classroom.delete_report', analysis_id=record.analysis_id) }}" method="post" class="button-row">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="danger-button" type="submit">Yes, delete report</button>
+      <a class="secondary-button" href="{{ url_for('classroom.report_history') }}">Cancel</a>
+    </form>
+  </div>
+</section>
+{% endblock %}

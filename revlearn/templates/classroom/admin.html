@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator control center | ELF Security Learning Lab{% endblock %}
+
+{% block content %}
+<section class="hero compact-hero role-hero admin-hero">
+  <p class="eyebrow">Administrator workspace</p>
+  <h1>Control access and review accountability.</h1>
+  <p class="lead">Assign approved roles, disable accounts, and inspect security-relevant events. Your own administrator access is protected from self-modification.</p>
+  <div class="button-row"><a class="primary-button" href="{{ url_for('classroom.create_instructor') }}">Add instructor</a></div>
+</section>
+
+<section class="panel admin-panel">
+  <div class="section-heading"><div><h2>User access</h2><p>{{ users|length }} account(s)</p></div><a class="secondary-button" href="{{ url_for('classroom.create_instructor') }}">Add instructor</a></div>
+  <div class="admin-user-list">
+    {% for user in users %}
+      <article class="admin-user-card">
+        <div class="admin-user-identity">
+          <div><strong>{{ user.display_name }}</strong><span>{{ user.email }}</span></div>
+          <span class="role-badge role-{{ user.role }}">{{ user.role }}</span>
+        </div>
+        {% if user.user_id == current_user.user_id %}
+          <p class="protected-account">Current administrator - role and status changes are disabled for this session.</p>
+        {% else %}
+          <form action="{{ url_for('classroom.update_user', user_id=user.user_id) }}" method="post" class="access-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <label>Role
+              <select name="role">
+                {% for role in ('student', 'instructor', 'admin') %}<option value="{{ role }}"{% if user.role == role %} selected{% endif %}>{{ role|title }}</option>{% endfor %}
+              </select>
+            </label>
+            <label class="status-control"><input type="checkbox" name="active" value="1"{% if user.active %} checked{% endif %}> Account active</label>
+            <button class="secondary-button" type="submit">Update access</button>
+          </form>
+        {% endif %}
+        <small>Created {{ user.created_at }} &middot; Last sign in {{ user.last_login_at or "Never" }}</small>
+      </article>
+    {% else %}<p>No accounts found.</p>{% endfor %}
+  </div>
+</section>
+
+<section class="panel admin-panel">
+  <div class="section-heading"><div><h2>Recent audit activity</h2><p>Latest authentication, progress, content, and access events</p></div></div>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for event in audit_events %}
+          <tr>
+            <td>{{ event.created_at }}</td><td>{{ event.actor_email or "System" }}</td>
+            <td><code>{{ event.action }}</code></td><td>{{ event.target_type or "-" }} {{ event.target_id or "" }}</td>
+            <td>{{ event.details or "-" }}</td>
+          </tr>
+        {% else %}<tr><td colspan="5">No audit events recorded.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Create account | ELF Security Learning Lab{% endblock %}
+
+{% block content %}
+<section class="auth-layout">
+  <div class="hero compact-hero">
+    <p class="eyebrow">Version 2.0 classroom access</p>
+    <h1>Create your student workspace.</h1>
+    <p class="lead">Student accounts provide private learning-progress tracking while analysis remains temporary. Uploaded binaries and report history are not retained.</p>
+  </div>
+
+  <div class="panel auth-panel">
+    <div class="panel-heading">
+      <div><span class="step-number">STUDENT</span><h2>Create account</h2></div>
+    </div>
+    {% include "auth/_errors.html" %}
+    <form class="auth-form" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Display name
+        <input name="display_name" type="text" minlength="2" maxlength="80" autocomplete="name" required value="{{ values.display_name }}">
+      </label>
+      <label>Email address
+        <input name="email" type="email" maxlength="254" autocomplete="email" required value="{{ values.email }}">
+      </label>
+      <label>Password
+        <span class="password-field">
+          <input id="register-password" name="password" type="password" minlength="12" autocomplete="new-password" required>
+          <button class="password-toggle" type="button" data-password-toggle="register-password"
+                  aria-controls="register-password" aria-pressed="false"
+                  aria-label="Show password">Show</button>
+        </span>
+        <small>Use at least 12 characters with a letter and a number.</small>
+      </label>
+      <label>Confirm password
+        <span class="password-field">
+          <input id="confirm-password" name="confirm_password" type="password" minlength="12" autocomplete="new-password" required>
+          <button class="password-toggle" type="button" data-password-toggle="confirm-password"
+                  aria-controls="confirm-password" aria-pressed="false"
+                  aria-label="Show confirmation password">Show</button>
+        </span>
+      </label>
+      <button class="primary-button" type="submit">Create student account</button>
+    </form>
+    <p class="auth-switch">Already registered? <a href="{{ url_for('auth.login') }}">Sign in</a>.</p>
+  </div>
+</section>
+{% endblock %}

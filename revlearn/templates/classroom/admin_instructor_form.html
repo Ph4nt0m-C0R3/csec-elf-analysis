@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Add instructor | ELF Security Learning Lab{% endblock %}
+
+{% block content %}
+<section class="auth-layout admin-create-layout">
+  <div class="hero compact-hero role-hero admin-hero">
+    <p class="eyebrow">Administrator control center</p>
+    <h1>Add an Instructor.</h1>
+    <p class="lead">Create a trusted teaching account with access to learning-guide content and the binary-example studio. Instructor accounts cannot manage users or administrator access.</p>
+    <div class="button-row"><a class="secondary-button" href="{{ url_for('classroom.admin_dashboard') }}">Back to Admin</a></div>
+  </div>
+
+  <div class="panel auth-panel">
+    <div class="panel-heading"><div><span class="step-number">INSTRUCTOR</span><h2>Account details</h2></div></div>
+    {% include "auth/_errors.html" %}
+    <form class="auth-form" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Display name
+        <input name="display_name" type="text" minlength="2" maxlength="80" autocomplete="name" required value="{{ values.display_name }}">
+      </label>
+      <label>Email address
+        <input name="email" type="email" maxlength="254" autocomplete="email" required value="{{ values.email }}">
+      </label>
+      <label>Initial password
+        <span class="password-field">
+          <input id="instructor-password" name="password" type="password" minlength="12" autocomplete="new-password" required>
+          <button class="password-toggle" type="button" data-password-toggle="instructor-password" aria-controls="instructor-password" aria-pressed="false" aria-label="Show initial password">Show</button>
+        </span>
+        <small>Use at least 12 characters with a letter and a number. Share it through a trusted channel.</small>
+      </label>
+      <label>Confirm initial password
+        <span class="password-field">
+          <input id="instructor-confirm-password" name="confirm_password" type="password" minlength="12" autocomplete="new-password" required>
+          <button class="password-toggle" type="button" data-password-toggle="instructor-confirm-password" aria-controls="instructor-confirm-password" aria-pressed="false" aria-label="Show password confirmation">Show</button>
+        </span>
+      </label>
+      <button class="primary-button" type="submit">Create instructor account</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

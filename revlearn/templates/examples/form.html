@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}{{ heading }} | ELF Security Learning Lab{% endblock %}
+
+{% block content %}
+<section class="hero compact-hero">
+  <p class="eyebrow">Instructor example studio</p><h1>{{ heading }}</h1><p class="lead">{{ introduction }}</p>
+</section>
+
+<section class="panel example-editor-panel">
+  {% include "auth/_errors.html" %}
+  <form method="post" class="example-editor">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="editor-grid">
+      <label>Title<input name="title" minlength="4" maxlength="120" required value="{{ values.title }}"></label>
+      <label>URL slug<input name="slug" maxlength="100" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" value="{{ values.slug }}" placeholder="generated-from-title"></label>
+      <label>Difficulty<select name="difficulty">{% for difficulty in difficulties %}<option value="{{ difficulty }}"{% if values.difficulty == difficulty %} selected{% endif %}>{{ difficulty|title }}</option>{% endfor %}</select></label>
+      <label>Architecture<input name="architecture" minlength="2" maxlength="80" required value="{{ values.architecture }}"></label>
+    </div>
+    <label>Short summary<textarea name="summary" minlength="20" maxlength="500" required>{{ values.summary }}</textarea><small>Explain what the learner will compare, identify, or understand.</small></label>
+    <label>Source code<textarea class="code-input" name="source_code" minlength="20" maxlength="12000" required spellcheck="false">{{ values.source_code }}</textarea></label>
+    <label>Build commands<textarea class="code-input" name="build_command" minlength="5" maxlength="4000" required spellcheck="false">{{ values.build_command }}</textarea><small>Use reproducible commands for code the learner can inspect. Do not link to unknown executables.</small></label>
+    <label>Expected findings<textarea name="expected_findings" minlength="20" maxlength="4000" required>{{ values.expected_findings }}</textarea></label>
+    <label>Guided walkthrough<textarea name="walkthrough" minlength="30" maxlength="8000" required>{{ values.walkthrough }}</textarea></label>
+    <label class="publish-control"><input type="checkbox" name="published" value="1"{% if values.published %} checked{% endif %}><span><strong>Publish this example</strong><small>Leave unchecked until the lesson has been reviewed and reproduced.</small></span></label>
+    <div class="button-row"><button class="primary-button" type="submit">Save example</button><a class="secondary-button" href="{{ url_for('examples.manage') }}">Cancel</a></div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,318 @@
+REVERSE ENGINEERING AND BINARY SECURITY ANALYSIS LEARNING SYSTEM
+PORTABLE RUN GUIDE FOR TWO LAPTOPS AND AN EXTERNAL DRIVE
+========================================================
+
+This guide is written for a project folder that is moved between laptops on
+an external hard disk. Use the launcher scripts for normal work so you do not
+have to type the Python setup commands every time.
+
+
+IMPORTANT
+---------
+1. Run the project as a normal user, not as Administrator or root.
+2. Analyze only ELF files that you own or have permission to inspect.
+3. Windows .exe files are PE files and are not supported by this version.
+4. The application performs static analysis and does not run uploaded files.
+5. Press Ctrl+C in the terminal to stop the server.
+6. Do not reuse one virtual environment on both laptops.
+
+
+WHY THERE ARE SEPARATE PYTHON ENVIRONMENTS
+==========================================
+
+Python virtual environments store local paths. When the same external drive is
+moved to another laptop, or Windows gives the drive a different letter, an old
+.venv can point to the wrong Python installation.
+
+This project now uses:
+
+   .venvs/windows-YOURCOMPUTERNAME
+   .venvs/kali-your-hostname
+
+Each laptop gets its own environment automatically. The launcher scripts create
+the environment if missing and reinstall packages only when requirements.txt
+changes.
+
+
+DAILY RUN ON WINDOWS 11
+=======================
+
+1. Open PowerShell.
+
+2. Go to the project folder on the external drive. The drive letter may be C:,
+   D:, E:, F:, or something else, so use your real path:
+
+   cd "E:\1.Main_folder\UIT_files\6th_sem\Csec\Project\Main"
+
+3. Start the application:
+
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+   .\scripts\run_windows.ps1
+
+4. Open this address in a browser:
+
+   http://127.0.0.1:5000
+
+5. Test the health endpoint if needed:
+
+   http://127.0.0.1:5000/healthz
+
+   Expected result: {"status":"ok"}
+
+6. Stop the server:
+
+   Ctrl+C
+
+
+FIRST TIME ON EACH WINDOWS LAPTOP
+=================================
+
+Do this once on Laptop 1 and once on Laptop 2.
+
+1. Install Python 3.11 or newer from python.org or Microsoft Store.
+
+2. Confirm Python is available. Try the first command. If Windows says py is
+   not recognized, use the second command:
+
+   py --version
+   python --version
+
+3. Run the normal Windows launcher:
+
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+   .\scripts\run_windows.ps1
+
+The first run creates .venvs/windows-YOURCOMPUTERNAME and installs:
+
+   Flask
+   pyelftools
+   capstone
+   waitress
+   pytest
+   pytest-cov
+
+After that, use the DAILY RUN ON WINDOWS 11 section.
+
+
+DAILY RUN ON KALI LINUX
+=======================
+
+1. Open Terminal.
+
+2. Go to the project folder. Examples:
+
+   cd /media/kali/ExternalDrive/Main
+
+   or, if copied to the Kali home folder:
+
+   cd /home/kali/revlearn
+
+3. Start the application:
+
+   bash scripts/run_kali.sh
+
+4. Open Firefox:
+
+   http://127.0.0.1:5000
+
+5. Stop the server:
+
+   Ctrl+C
+
+
+FIRST TIME ON EACH KALI LAPTOP
+==============================
+
+Do this once on each Kali laptop.
+
+1. Install Python support:
+
+   sudo apt update
+   sudo apt install -y python3 python3-venv python3-pip
+
+2. Install optional compilation and verification tools:
+
+   sudo apt install -y build-essential binutils gdb checksec
+
+3. Run the normal Kali launcher:
+
+   bash scripts/run_kali.sh
+
+The first run creates .venvs/kali-YOURHOSTNAME and installs the Python
+packages from requirements.txt.
+
+
+CREATE AN INSTRUCTOR ACCOUNT
+============================
+
+Public registration creates Student accounts only. Create a trusted
+Instructor from a terminal in the project folder, with the correct virtual
+environment activated:
+
+   python -m flask --app app create-user --role instructor
+
+Enter the Instructor's email address, display name, password, and password
+confirmation when prompted. Use at least 12 characters with a letter and a
+number. The password is hidden while it is typed.
+
+Alternatively, sign in as an Administrator and select Admin -> Add instructor.
+Complete the protected form and share the initial password through a trusted
+channel. The new account is assigned only the Instructor role, and the action
+is recorded in Recent audit activity.
+
+After signing in, open Instructor from the navigation. Learning-guide content
+is managed in the Instructor workspace. Binary lessons are managed under
+Instructor -> Manage binary examples. Create lessons as Draft first, preview
+and reproduce the instructions, then enable Publish so Students and Guests can
+browse the lesson at /examples.
+
+
+IF PYTHON BREAKS AFTER MOVING THE EXTERNAL DRIVE
+================================================
+
+This usually means the virtual environment was made with an old drive letter
+or a different laptop Python path.
+
+Windows fix:
+
+   Remove-Item -Recurse -Force .venvs\windows-YOURCOMPUTERNAME
+   .\scripts\run_windows.ps1
+
+Kali fix:
+
+   rm -rf ".venvs/kali-$(hostname)"
+   bash scripts/run_kali.sh
+
+Only delete the environment for the current laptop. Do not delete your source
+code, samples, screenshots, or report files.
+
+
+MANUAL WINDOWS COMMANDS
+=======================
+
+Use this section only if the Windows launcher script cannot be used.
+
+   py -3 -m venv .venvs\windows-YOURCOMPUTERNAME
+
+   If py is not recognized, use:
+
+   python -m venv .venvs\windows-YOURCOMPUTERNAME
+
+   Then continue:
+
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+   .\.venvs\windows-YOURCOMPUTERNAME\Scripts\Activate.ps1
+   python -m pip install --upgrade pip
+   python -m pip install -r requirements.txt
+   python scripts\init_db.py
+   python -m flask --app app create-user --role instructor
+   python -m flask --app app create-user --role admin
+   $env:REVLEARN_SECRET_KEY = python -c "import secrets; print(secrets.token_hex(32))"
+   python app.py
+
+Open:
+
+   http://127.0.0.1:5000
+
+Stop:
+
+   Ctrl+C
+   deactivate
+
+
+MANUAL KALI COMMANDS
+====================
+
+Use this section only if the Kali launcher script cannot be used.
+
+   python3 -m venv .venvs/kali-YOURHOSTNAME
+   source .venvs/kali-YOURHOSTNAME/bin/activate
+   python -m pip install --upgrade pip
+   python -m pip install -r requirements.txt
+   python scripts/init_db.py
+   python -m flask --app app create-user --role instructor
+   python -m flask --app app create-user --role admin
+   export REVLEARN_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+   python app.py
+
+Open:
+
+   http://127.0.0.1:5000
+
+Stop:
+
+   Ctrl+C
+   deactivate
+
+
+OPTIONAL WINDOWS PRODUCTION-LIKE SERVER
+=======================================
+
+Activate the Windows environment first, then run:
+
+   waitress-serve --listen=127.0.0.1:8000 --call app:create_app
+
+Open:
+
+   http://127.0.0.1:8000
+
+
+CREATE DEMONSTRATION ELF FILES ON KALI
+======================================
+
+1. Create the build directory:
+
+   mkdir -p samples/build
+
+2. Compile a weakly protected ELF:
+
+   gcc samples/vulnerable_demo.c -o samples/build/demo_weak -fno-stack-protector -no-pie -Wl,-z,norelro -z execstack
+
+3. Compile a hardened ELF:
+
+   gcc samples/vulnerable_demo.c -o samples/build/demo_hardened -fstack-protector-all -fPIE -pie -Wl,-z,relro,-z,now -Wl,-z,noexecstack -D_FORTIFY_SOURCE=2 -O2
+
+4. Confirm that both are ELF files:
+
+   file samples/build/demo_weak
+   file samples/build/demo_hardened
+
+5. Analyze both files in the web application and compare Stack Canary, NX,
+   PIE, RELRO, Fortify, imported functions, observations, and recommendations.
+
+Compiler warnings are expected because vulnerable_demo.c is intentionally
+unsafe for educational analysis.
+
+
+RUN TESTS
+=========
+
+Windows:
+
+   .\.venvs\windows-YOURCOMPUTERNAME\Scripts\Activate.ps1
+   python -m pytest
+
+Kali:
+
+   source .venvs/kali-YOURHOSTNAME/bin/activate
+   python -m pytest
+
+Expected result:
+
+   44 passed
+
+Coverage:
+
+   python -m pytest --cov=revlearn --cov-report=term-missing
+
+
+MANUAL COMPARISON ON KALI
+=========================
+
+   checksec --file=samples/build/demo_weak
+   checksec --file=samples/build/demo_hardened
+   readelf -h samples/build/demo_hardened
+   readelf -l samples/build/demo_hardened
+   readelf -d samples/build/demo_hardened
+   objdump -T samples/build/demo_hardened
+   strings -a samples/build/demo_hardened

@@ -1,0 +1,13 @@
+.venv/
+.venv-win/
+.venv-kali/
+.venvs/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+instance/*.db
+instance/uploads/
+samples/build/
+.codex-tmp/

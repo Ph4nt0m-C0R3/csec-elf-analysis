@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | ELF Security Learning Lab{% endblock %}
+{% block content %}
+<section class="message-card error-card">
+  <div class="message-code" aria-hidden="true">!</div>
+  <div>
+    <div class="eyebrow">Request stopped safely</div>
+    <h1>{{ title }}</h1>
+    <p class="lead">{{ message }}</p>
+    <p>{{ guidance }}</p>
+    <a class="primary-button inline-button" href="{{ url_for('main.index') }}">Return to analyzer</a>
+  </div>
+</section>
+{% endblock %}
+

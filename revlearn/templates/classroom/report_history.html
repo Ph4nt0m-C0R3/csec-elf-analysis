@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}My analysis reports | ELF Security Learning Lab{% endblock %}
+
+{% block content %}
+<section class="hero compact-hero role-hero student-hero">
+  <p class="eyebrow">Student report history</p>
+  <h1>Review binaries you have analyzed.</h1>
+  <p class="lead">These are private analysis results retained for your account until you delete them. Uploaded ELF files are never retained.</p>
+  <div class="button-row"><a class="primary-button" href="{{ url_for('main.index') }}">Analyze another binary</a><a class="secondary-button" href="{{ url_for('classroom.student_dashboard') }}">My learning</a></div>
+</section>
+
+<section aria-labelledby="saved-reports-title">
+  <div class="section-heading"><div><p class="eyebrow">Private history</p><h2 id="saved-reports-title">Saved reports</h2></div><p>{{ records|length }} report(s)</p></div>
+  <div class="report-history-list">
+    {% for record in records %}
+      <article class="panel history-card">
+        <div class="history-card-main">
+          <div><div class="example-meta"><span>{{ record.architecture }}</span><span>{{ record.file_size }} bytes</span><span>Analyzed {{ record.created_at }}</span></div>
+          <h2><a href="{{ url_for('classroom.saved_report', analysis_id=record.analysis_id) }}">{{ record.filename }}</a></h2></div>
+          <div class="history-score score-level-{{ 'good' if record.score >= 75 else 'review' }}"><strong>{{ record.score }}/100</strong><span>{{ record.rating }}</span></div>
+        </div>
+        <div class="history-actions">
+          <a class="primary-button" href="{{ url_for('classroom.saved_report', analysis_id=record.analysis_id) }}">Review report</a>
+          <a class="secondary-button" href="{{ url_for('main.report_pdf', analysis_id=record.analysis_id) }}">PDF</a>
+          <a class="danger-link" href="{{ url_for('classroom.delete_report', analysis_id=record.analysis_id) }}">Delete</a>
+        </div>
+      </article>
+    {% else %}
+      <div class="panel empty-state"><h2>No saved reports yet</h2><p>Sign in as a Student and analyze an ELF file. Its bounded report will appear here automatically.</p></div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

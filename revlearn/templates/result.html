@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+{% block title %}Report: {{ result.filename }} | ELF Security Learning Lab{% endblock %}
+{% block content %}
+<section class="report-header">
+  <div>
+    <div class="eyebrow">Static analysis report</div>
+    <h1>{{ result.filename }}</h1>
+    <p>
+      {{ result.file_size_display }} &middot; {{ result.metadata.architecture }}
+      &middot; {{ result.metadata.bits }}-bit &middot; analyzed in {{ result.elapsed_ms }} ms
+    </p>
+  </div>
+  <div class="header-actions">
+    <a class="secondary-button" href="{{ url_for('main.report_pdf', analysis_id=result.analysis_id) }}">Download PDF</a>
+    {% if current_user and current_user.role == 'student' %}<a class="secondary-button" href="{{ url_for('classroom.report_history') }}">My reports</a>{% endif %}
+    <a class="secondary-button" href="{{ url_for('main.index') }}">Analyze another file</a>
+  </div>
+</section>
+
+{% if saved_to_history %}
+<div class="saved-report-notice" role="status">
+  <strong>Saved to your private report history</strong>
+  <span>The analysis result remains available until you delete it. The uploaded ELF file itself was deleted after analysis.</span>
+</div>
+{% endif %}
+
+<div class="disclaimer">
+  <strong>Interpretation limit</strong>
+  <span>{{ result.education.disclaimer }}</span>
+</div>
+
+<section class="risk-overview panel" aria-labelledby="risk-overview-title">
+  <div class="risk-overview-lead security-score-tone-{{ result.risk_summary.security_level }}">
+    <span class="risk-kicker">ELF security score</span>
+    <strong id="risk-overview-title">{{ result.risk_summary.score }}/100</strong>
+    <p>
+      {{ result.risk_summary.rating }} rating. Highest review priority:
+      {{ result.risk_summary.highest_label }}.
+      Higher means more secure in the supported checks.
+    </p>
+  </div>
+  <div class="risk-count-grid" aria-label="Finding counts by attention level">
+    {% for level in ["critical", "high", "medium", "low", "info"] %}
+    <div class="risk-count risk-tone-{{ level }}">
+      <span>{{ level|upper }}</span>
+      <strong>{{ result.risk_summary.counts[level] }}</strong>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="risk-legend" aria-label="Risk color legend">
+    <span class="legend-critical">Critical</span>
+    <span class="legend-high">High</span>
+    <span class="legend-medium">Medium</span>
+    <span class="legend-low">Low</span>
+    <span class="legend-info">Information</span>
+  </div>
+</section>
+
+<section class="panel report-section score-explainer" aria-labelledby="score-explainer-title">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">Score transparency</span>
+      <h2 id="score-explainer-title">How the score is calculated</h2>
+      <p>
+        The score starts at 100 and subtracts points for missing hardening, risky imports,
+        and selected string indicators. Higher means the uploaded ELF looks more secure
+        according to these supported static checks.
+      </p>
+    </div>
+  </div>
+  <div class="score-explainer-grid">
+    <article>
+      <h3>Active deductions</h3>
+      {% if result.risk_summary.score_details.factors %}
+      <ul class="score-factor-list">
+        {% for item in result.risk_summary.score_details.factors %}
+        <li>
+          <span>{{ item.source }}</span>
+          <strong>-{{ item.points }}</strong>
+          <p>{{ item.reason }}</p>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-state">No score deduction was detected.</p>
+      {% endif %}
+      <p class="note">
+        Total deductions: {{ result.risk_summary.score_details.deductions }}/100.
+        {% if result.risk_summary.score_details.capped %}
+        Raw deductions were {{ result.risk_summary.score_details.raw_deductions }} and were capped at 100.
+        {% endif %}
+      </p>
+    </article>
+    <article>
+      <h3>Rating bands</h3>
+      <div class="rating-band-list">
+        {% for band in result.risk_summary.score_details.rating_bands %}
+        <div><span>{{ band.range }}</span><strong>{{ band.rating }}</strong></div>
+        {% endfor %}
+      </div>
+      <h3>Important notes</h3>
+      <ul class="plain-list">
+        {% for note in result.risk_summary.score_details.notes %}
+        <li>{{ note }}</li>
+        {% endfor %}
+      </ul>
+    </article>
+  </div>
+  <details>
+    <summary>Show scoring weights</summary>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Protection</th><th>Warn deduction</th><th>Danger deduction</th><th>Unknown deduction</th></tr></thead>
+        <tbody>
+        {% for row in result.risk_summary.score_details.protection_weights %}
+          <tr><td>{{ row.check }}</td><td>-{{ row.warn }}</td><td>-{{ row.danger }}</td><td>-{{ row.unknown }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Function warning severity</th><th>Deduction</th></tr></thead>
+        <tbody>
+        {% for row in result.risk_summary.score_details.function_weights %}
+          <tr><td>{{ row.severity|title }}</td><td>-{{ row.points }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+</section>
+
+<section aria-labelledby="overview-title">
+  <div class="section-heading">
+    <div><span class="eyebrow">Overview</span><h2 id="overview-title">Protection snapshot</h2></div>
+  </div>
+  <div class="protection-grid">
+    {% for key, item in result.protections.items() %}
+    <article class="protection-card status-{{ item.level }}">
+      <div class="protection-label">{{ "RPATH / RUNPATH" if key == "rpath" else key|upper }}</div>
+      <div class="status-row">
+        <span class="status-marker" aria-hidden="true"></span>
+        <span class="status">{{ item.status }}</span>
+        <span class="status-badge">{{ item.level|upper }}</span>
+      </div>
+      <p>{{ item.evidence }}</p>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="vulnerability-section panel" aria-labelledby="vulnerability-title">
+  <div class="section-heading vulnerability-heading">
+    <div>
+      <span class="eyebrow">Defensive security context</span>
+      <h2 id="vulnerability-title">Potential vulnerabilities and attacker impact</h2>
+      <p>
+        These entries explain what an attacker might try if the indicator is
+        confirmed by source review or controlled testing. They are not exploitation instructions.
+      </p>
+    </div>
+    <span class="finding-total">{{ result.education.vulnerabilities|length }} indicators</span>
+  </div>
+  {% if result.education.vulnerabilities %}
+  <div class="vulnerability-groups">
+    {% for level in ["critical", "high", "medium", "low", "info"] %}
+    {% set grouped_items = result.education.vulnerabilities
+      |selectattr("severity", "equalto", level)|list %}
+    {% if grouped_items %}
+    <section class="vulnerability-group" aria-labelledby="vulnerability-group-{{ level }}">
+      <div class="vulnerability-group-heading risk-tone-{{ level }}">
+        <h3 id="vulnerability-group-{{ level }}">
+          {{ "Information" if level == "info" else level|title }}
+        </h3>
+        <span>{{ grouped_items|length }} finding(s)</span>
+      </div>
+      <div class="vulnerability-grid">
+        {% for item in grouped_items %}
+        <article class="vulnerability-card severity-{{ item.severity }}">
+          <header>
+            <span class="risk-badge risk-{{ item.severity }}">{{ item.severity }} risk</span>
+            <span class="standard-badge">{{ item.standard }}</span>
+          </header>
+          <h3>{{ item.title }}</h3>
+          <dl>
+            <div>
+              <dt>Why it was shown</dt>
+              <dd><strong>{{ item.source }}:</strong> {{ item.evidence }}</dd>
+            </div>
+            <div class="attack-context">
+              <dt>Possible attacker goal or impact</dt>
+              <dd>{{ item.attack }}</dd>
+            </div>
+            <div class="prevention-context">
+              <dt>How to prevent or reduce it</dt>
+              <dd>{{ item.prevention }}</dd>
+            </div>
+          </dl>
+          <p class="qualification">{{ item.qualification }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="no-vulnerability-indicators">
+    <strong>No potential vulnerability indicator was highlighted by these checks.</strong>
+    <p>This does not prove the binary is secure; continue authorized review and testing.</p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="panel report-section developer-guidance" aria-labelledby="developer-guidance-title">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">Developer remediation</span>
+      <h2 id="developer-guidance-title">Secure ELF build and coding practices</h2>
+      <p>{{ result.developer_guidance.summary }}</p>
+    </div>
+  </div>
+  <div class="developer-guidance-grid">
+    <article>
+      <h3>Build actions for this ELF</h3>
+      <ul class="plain-list">
+        {% for item in result.developer_guidance.secure_build %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+      <div class="command-example">
+        <span>Example GCC command :</span>
+        <code>{{ result.developer_guidance.build_example }}</code>
+      </div>
+    </article>
+    <article>
+      <h3>Coding practices to review</h3>
+      <ul class="plain-list">
+        {% for item in result.developer_guidance.coding_practices %}
+        <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </article>
+  </div>
+</section>
+
+<section class="reverse-section panel" aria-labelledby="reverse-title">
+  <div class="section-heading reverse-heading">
+    <div>
+      <span class="eyebrow">Reverse engineering view</span>
+      <h2 id="reverse-title">Capstone raw disassembly</h2>
+      <p>
+        Assembly output is a static approximation. Highlighted instructions
+        identify review points, not confirmed vulnerabilities.
+      </p>
+    </div>
+    <div class="engine-badges">
+      <span>Capstone</span>
+    </div>
+  </div>
+
+  <div class="reverse-block">
+    <div class="reverse-block-heading">
+      <div>
+        <h3>Raw assembly disassembly</h3>
+        <p>
+          {{ result.disassembly.engine }} &middot; {{ result.disassembly.architecture }}
+          {% if result.disassembly.available %}&middot; {{ result.disassembly.section }}{% endif %}
+        </p>
+      </div>
+      <div class="reverse-counts">
+        <span class="count-badge">{{ result.disassembly.instruction_count }} instructions</span>
+        <span class="risk-badge risk-{{ 'high' if result.disassembly.risk_count else 'info' }}">
+          {{ result.disassembly.risk_count }} review point(s)
+        </span>
+      </div>
+    </div>
+    {% if result.disassembly.available %}
+      {% if result.disassembly.risks %}
+      <div class="assembly-risk-list">
+        {% for risk in result.disassembly.risks %}
+        <div class="assembly-risk severity-{{ risk.severity }}">
+          <span class="risk-badge risk-{{ risk.severity }}">{{ risk.severity }}</span>
+          <code>{{ risk.address }}</code>
+          <strong>{{ risk.title }}</strong>
+          <p>{{ risk.detail }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="disassembly-table-wrap">
+        <table class="disassembly-table">
+          <thead>
+            <tr>
+              <th>Address</th>
+              <th>Bytes</th>
+              <th>Instruction</th>
+              <th>Resolved target / review</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for instruction in result.disassembly.instructions %}
+            <tr class="{{ 'instruction-risk severity-' + instruction.risk.severity if instruction.risk else '' }}">
+              <td><code>{{ instruction.address }}</code></td>
+              <td><code class="instruction-bytes">{{ instruction.bytes }}</code></td>
+              <td>
+                {% if instruction.symbol %}
+                <span class="symbol-label">{{ instruction.symbol }}:</span>
+                {% endif %}
+                <code><strong>{{ instruction.mnemonic }}</strong> {{ instruction.operands }}</code>
+              </td>
+              <td>
+                {% if instruction.target_symbol %}<code>{{ instruction.target_symbol }}()</code>{% endif %}
+                {% if instruction.risk %}
+                <span class="risk-badge risk-{{ instruction.risk.severity }}">
+                  {{ instruction.risk.title }}
+                </span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if result.disassembly.truncated %}
+      <p class="note">The instruction list was truncated at the configured report limit.</p>
+      {% endif %}
+      <p class="qualification">{{ result.disassembly.note }}</p>
+    {% else %}
+      <div class="tool-unavailable"><p>{{ result.disassembly.note }}</p></div>
+    {% endif %}
+  </div>
+</section>
+
+<div class="report-layout">
+  <div class="report-main">
+    <section class="panel report-section" aria-labelledby="metadata-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">ELF header</span><h2 id="metadata-title">Binary information</h2></div>
+      </div>
+      <dl class="fact-grid">
+        <div><dt>Architecture</dt><dd>{{ result.metadata.architecture }}</dd></div>
+        <div><dt>Class</dt><dd>{{ result.metadata.bits }}-bit</dd></div>
+        <div><dt>Byte order</dt><dd>{{ result.metadata.endianness }}</dd></div>
+        <div><dt>File type</dt><dd>{{ result.metadata.file_type }}</dd></div>
+        <div><dt>Entry point</dt><dd><code>{{ result.metadata.entry_point }}</code></dd></div>
+        <div><dt>Sections</dt><dd>{{ result.metadata.section_count }}</dd></div>
+      </dl>
+      {% if result.metadata.compiler_clues %}
+      <h3>Compiler clues</h3>
+      <ul class="plain-list">
+        {% for clue in result.metadata.compiler_clues %}<li><code>{{ clue }}</code></li>{% endfor %}
+      </ul>
+      {% endif %}
+    </section>
+
+    <section class="panel report-section" aria-labelledby="functions-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Dynamic symbols</span>
+          <h2 id="functions-title">Imported functions</h2>
+        </div>
+        <span class="count-badge">{{ result.functions.imports|length }}</span>
+      </div>
+      {% if result.functions.warnings %}
+      <div class="warning-stack">
+        {% for warning in result.functions.warnings %}
+        <article class="function-warning severity-{{ warning.severity }}">
+          <div>
+            <code>{{ warning.name }}()</code>
+            <span class="risk-badge risk-{{ warning.severity }}">{{ warning.severity }} risk</span>
+          </div>
+          <p>{{ warning.explanation }}</p>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty-state">No imported function matched the educational warning list.</p>
+      {% endif %}
+      <details>
+        <summary>Show all retained imports</summary>
+        <div class="code-cloud">
+          {% for name in result.functions.imports %}<code>{{ name }}</code>{% endfor %}
+        </div>
+      </details>
+    </section>
+
+    <section class="panel report-section" aria-labelledby="strings-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">Readable data</span><h2 id="strings-title">Printable strings</h2></div>
+        <span class="count-badge">{{ result.strings.retained }}/{{ result.strings.total_found }}</span>
+      </div>
+      <div class="string-categories">
+        {% for label, values in [
+          ("URLs", result.strings.urls),
+          ("Paths", result.strings.paths),
+          ("Commands", result.strings.commands),
+          ("Suspicious keywords", result.strings.suspicious)
+        ] %}
+        <article>
+          <h3>{{ label }} <span>{{ values|length }}</span></h3>
+          {% if values %}
+          <ul class="mono-list">{% for value in values %}<li>{{ value }}</li>{% endfor %}</ul>
+          {% else %}<p class="empty-state">None categorized.</p>{% endif %}
+        </article>
+        {% endfor %}
+      </div>
+      <details>
+        <summary>Show retained general strings</summary>
+        <ul class="mono-list scroll-list">
+          {% for value in result.strings["items"] %}<li>{{ value }}</li>{% endfor %}
+        </ul>
+      </details>
+      {% if result.strings.truncated %}
+      <p class="note">The display is limited to keep the report responsive.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel report-section" aria-labelledby="evidence-title">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Evidence</span>
+          <h2 id="evidence-title">Readelf-like details</h2>
+        </div>
+      </div>
+
+      <details open>
+        <summary>ELF header fields</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Field</th><th>Value</th></tr></thead>
+            <tbody>
+            {% for row in result.evidence.header %}
+              <tr><td>{{ row.field }}</td><td><code>{{ row.value }}</code></td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Program headers</summary>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Type</th>
+                <th>Offset</th>
+                <th>Virtual address</th>
+                <th>File size</th>
+                <th>Memory size</th>
+                <th>Flags</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for row in result.evidence.program_headers %}
+              <tr>
+                <td>{{ row.index }}</td>
+                <td><code>{{ row.type }}</code></td>
+                <td><code>{{ row.offset }}</code></td>
+                <td><code>{{ row.virtual_address }}</code></td>
+                <td>{{ row.file_size }}</td>
+                <td>{{ row.memory_size }}</td>
+                <td><code>{{ row.flags }}</code></td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Dynamic section</summary>
+        {% if result.evidence.dynamic_entries %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tag</th><th>Value</th></tr></thead>
+            <tbody>
+            {% for row in result.evidence.dynamic_entries %}
+              <tr><td><code>{{ row.tag }}</code></td><td><code>{{ row.value }}</code></td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="empty-state">No dynamic section entries were found.</p>
+        {% endif %}
+      </details>
+    </section>
+
+    <section class="panel report-section" aria-labelledby="sections-title">
+      <div class="section-heading">
+        <div><span class="eyebrow">Structure</span><h2 id="sections-title">ELF sections</h2></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Type</th><th>Size</th></tr></thead>
+          <tbody>
+          {% for section in result.metadata.sections %}
+            <tr><td><code>{{ section.name }}</code></td><td>{{ section.type }}</td><td>{{ section.size }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <aside class="report-side">
+    <section class="panel report-section">
+      <span class="eyebrow">Interpretation</span>
+      <h2>Key observations</h2>
+      <div class="observation-list">
+        {% for item in result.education.observations %}
+        <article class="observation severity-{{ item.severity }}">
+          <span class="risk-badge risk-{{ item.severity }}">
+            {{ "Information" if item.severity == "info" else item.severity + " risk" }}
+          </span>
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.detail }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="panel report-section">
+      <span class="eyebrow">Next actions</span>
+      <h2>Recommendations</h2>
+      <ol class="recommendation-list">
+        {% for item in result.education.recommendations %}
+        <li>
+          <span class="priority-badge priority-{{ item.priority|lower }}">{{ item.priority }} priority</span>
+          <strong>{{ item.action }}</strong>
+          <p>{{ item.reason }}</p>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+
+    <section class="panel report-section">
+      <span class="eyebrow">Learn</span>
+      <h2>What the results mean</h2>
+      <div class="explanation-list">
+        {% for item in result.education.explanations %}
+        <details>
+          <summary>{{ item.title }}: {{ item.status }}</summary>
+          <p>{{ item.explanation }}</p>
+          <p><strong>Risk context:</strong> {{ item.risk }}</p>
+        </details>
+        {% endfor %}
+      </div>
+    </section>
+
+    {% if result.errors %}
+    <section class="panel report-section">
+      <span class="eyebrow">Partial results</span>
+      <h2>Module notices</h2>
+      {% for error in result.errors %}
+      <p><strong>{{ error.module|title }}:</strong> {{ error.message }}</p>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

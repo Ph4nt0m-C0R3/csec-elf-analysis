@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ topic.title }} | Learning guide{% endblock %}
+
+{% block content %}
+<article class="lesson-detail">
+  <header class="hero compact-hero lesson-hero">
+    <div class="lesson-breadcrumb"><a href="{{ url_for('main.learning') }}">Learning guide</a><span aria-hidden="true">/</span><span>{{ topic.category }}</span></div>
+    <span class="category">Topic {{ topic_position }} of {{ topic_total }} &middot; {{ topic.category }}</span>
+    <h1>{{ topic.title }}</h1>
+    <p class="lead">{{ topic.explanation }}</p>
+    <div class="button-row">
+      {% if current_user and current_user.role == 'student' %}
+      <form action="{{ url_for('classroom.update_progress', topic=topic.topic) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="return_to" value="detail"><input type="hidden" name="completed" value="{{ 0 if completed else 1 }}">
+        <button class="{{ 'secondary-button' if completed else 'primary-button' }}" type="submit">{{ 'Mark for review' if completed else 'Mark topic complete' }}</button>
+      </form>
+      {% endif %}
+      {% if current_user and current_user.role in ('instructor', 'admin') %}<a class="secondary-button" href="{{ url_for('classroom.instructor_dashboard', _anchor=topic.topic) }}">Edit this topic</a>{% endif %}
+    </div>
+  </header>
+
+  <section class="lesson-summary-grid">
+    <article class="panel lesson-summary-card risk-summary-card"><span class="eyebrow">Why it matters</span><h2>Security impact</h2><p>{{ topic.risk }}</p></article>
+    <article class="panel lesson-summary-card practice-summary-card"><span class="eyebrow">Recommended practice</span><h2>Safer approach</h2><p>{{ topic.recommendation }}</p></article>
+  </section>
+
+  <section class="panel technical-deep-dive">
+    <span class="eyebrow">Technical deep dive</span>
+    <h2>How the mechanism works</h2>
+    <p>{{ topic.technical_details }}</p>
+  </section>
+
+  <section class="lesson-lab-grid" aria-label="Practical laboratory">
+    <article class="panel lesson-lab-card"><span class="lab-step">LAB 01</span><h2>Reproduce and compare</h2><p>{{ topic.lab_exercise }}</p></article>
+    <article class="panel lesson-lab-card expected-card"><span class="lab-step">LAB 02</span><h2>Expected observations</h2><p>{{ topic.expected_observations }}</p></article>
+  </section>
+
+  <section class="lesson-code-section" aria-labelledby="code-comparison-title">
+    <div class="section-heading"><div><span class="eyebrow">Complete small programs</span><h2 id="code-comparison-title">Weak program and secure alternative</h2><p>Save each example as a separate C file. Review every line before compiling it in your authorized classroom environment.</p></div></div>
+    <div class="topic-code-grid lesson-code-grid">
+      <article><div class="code-panel-heading vulnerable-heading"><span>Program A &middot; Needs review</span><h3>Weak or vulnerable version</h3></div><pre class="learning-code vulnerable-code"><code>{{ topic.vulnerable_example }}</code></pre></article>
+      <article><div class="code-panel-heading secure-heading"><span>Program B &middot; Preferred</span><h3>Secure version</h3></div><pre class="learning-code secure-code"><code>{{ topic.secure_example }}</code></pre></article>
+    </div>
+  </section>
+
+  <section class="panel guided-review"><span class="eyebrow">Guided review</span><h2>What to examine</h2><p>{{ topic.review_steps }}</p></section>
+
+  <nav class="lesson-pagination" aria-label="Learning topic navigation">
+    {% if previous_topic %}<a href="{{ url_for('main.learning_detail', topic=previous_topic.topic) }}"><span>Previous topic</span><strong>&larr; {{ previous_topic.title }}</strong></a>{% else %}<span></span>{% endif %}
+    {% if next_topic %}<a class="next-topic" href="{{ url_for('main.learning_detail', topic=next_topic.topic) }}"><span>Next topic</span><strong>{{ next_topic.title }} &rarr;</strong></a>{% endif %}
+  </nav>
+</article>
+{% endblock %}
