@@ -4,6 +4,8 @@ A **Semester VI Cyber Security project** by Aung Myo Pyae, a University of Infor
 
 **Release status: v1. Further upgrades are planned.**
 
+**Development:** Csec is a solo project designed and implemented by Aung Myo Pyae.
+
 ## Screenshots
 
 ![Csec — ELF Security Learning System (v1) — screenshot 1](docs/screenshots/binary-security-lab-1.png)
