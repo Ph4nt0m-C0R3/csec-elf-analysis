@@ -4,6 +4,10 @@ A **Semester VI Cyber Security project** by Aung Myo Pyae, a University of Infor
 
 **Release status: v1. Further upgrades are planned.**
 
+**Project type:** Solo project
+
+**Project leader:** Aung Myo Pyae
+
 **Development:** Csec is a solo project designed and implemented by Aung Myo Pyae.
 
 ## Screenshots
